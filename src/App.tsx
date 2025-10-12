@@ -1,7 +1,7 @@
 import './App.css'
 
 import {ThemeProvider, CssBaseline, createTheme} from '@mui/material';
-import {Gui} from './sp0gui';
+import {Gui} from './sprint0gui';
 
 function App() {
   
