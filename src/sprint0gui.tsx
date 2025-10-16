@@ -20,13 +20,24 @@ export const Gui: React.FC = () => {
   const [boardSnapshot, setBoardSnapshot] = useState(() => cloneBoard(gameRef.current));
   const [playerOneMark, setPlayerOneMark] = useState<SosMark>('S');
   const [playerTwoMark, setPlayerTwoMark] = useState<SosMark>('O');
-
+  const [currentPlayer, setCurrentPlayer] = useState<'playerOne' | 'playerTwo'>('playerOne');
 
   const handleSizeChange = (event: SelectChangeEvent) => {
     const size = Number(event.target.value);
     setBoardSize(size);
     gameRef.current.reset(size);
     setBoardSnapshot(cloneBoard(gameRef.current));
+  };
+
+  const handleMove = (row: number, col: number) => {
+    const mark: SosMark = currentPlayer === 'playerOne' ? playerOneMark : playerTwoMark;
+    try {
+      gameRef.current.place(row, col, mark);
+      setBoardSnapshot(cloneBoard(gameRef.current));
+      setCurrentPlayer((prev) => (prev === 'playerOne' ? 'playerTwo' : 'playerOne'));
+    } catch (error) {
+      console.warn(error);
+    }
   };
 
   return (
@@ -87,6 +98,7 @@ export const Gui: React.FC = () => {
             <Button
               key={`${r}-${c}`}
               variant="outlined"
+              onClick={() => handleMove(r, c)}
               sx={{minWidth: 0, width: '100%', height: '100%'}}
             >
               {cell ?? ''}
