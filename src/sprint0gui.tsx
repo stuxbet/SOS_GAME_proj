@@ -2,7 +2,6 @@ import React, {useRef, useState} from 'react';
 import {
   Box,
   Button,
-  Checkbox,
   FormControlLabel,
   MenuItem,
   Radio,
@@ -11,7 +10,7 @@ import {
   Typography,
 } from '@mui/material';
 import type {SelectChangeEvent} from '@mui/material/Select';
-import {SosGame} from './features/models';
+import {SosGame, type SosMark} from './features/models';
 
 const cloneBoard = (game: SosGame) => game.board.map((row) => [...row]);
 
@@ -19,6 +18,8 @@ export const Gui: React.FC = () => {
   const gameRef = useRef(new SosGame(3));
   const [boardSize, setBoardSize] = useState(3);
   const [boardSnapshot, setBoardSnapshot] = useState(() => cloneBoard(gameRef.current));
+  const [playerOneMark, setPlayerOneMark] = useState<SosMark>('S');
+  const [playerTwoMark, setPlayerTwoMark] = useState<SosMark>('O');
 
 
   const handleSizeChange = (event: SelectChangeEvent) => {
@@ -32,12 +33,38 @@ export const Gui: React.FC = () => {
     <Box sx={{p: 4, maxWidth: 720, width: '100%', mx: 'auto'}}>
       <Typography variant="h4" gutterBottom>Sprint 0 Simple GUI</Typography>
       <hr />
-      <FormControlLabel control={<Checkbox />} label="Check me" />
 
       <RadioGroup name="Game Mode">
         <FormControlLabel value="simple" control={<Radio />} label="Simple" />
         <FormControlLabel value="general" control={<Radio />} label="General" />
       </RadioGroup>
+
+      <Box display="flex" justifyContent="center" gap={6} mt={2}>
+        <Box>
+          <Typography variant="subtitle1" gutterBottom>Player One</Typography>
+          <RadioGroup
+            row
+            name="player-one-mark"
+            value={playerOneMark}
+            onChange={(event) => setPlayerOneMark(event.target.value as SosMark)}
+          >
+            <FormControlLabel value="S" control={<Radio />} label="S" />
+            <FormControlLabel value="O" control={<Radio />} label="O" />
+          </RadioGroup>
+        </Box>
+        <Box>
+          <Typography variant="subtitle1" gutterBottom>Player Two</Typography>
+          <RadioGroup
+            row
+            name="player-two-mark"
+            value={playerTwoMark}
+            onChange={(event) => setPlayerTwoMark(event.target.value as SosMark)}
+          >
+            <FormControlLabel value="S" control={<Radio />} label="S" />
+            <FormControlLabel value="O" control={<Radio />} label="O" />
+          </RadioGroup>
+        </Box>
+      </Box>
 
       <Box sx={{maxWidth: 50, mt: 2}}>
         <Select fullWidth value={boardSize} onChange={handleSizeChange}>
