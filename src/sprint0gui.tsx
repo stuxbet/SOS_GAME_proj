@@ -94,6 +94,10 @@ export const Gui: React.FC = () => {
         </Select>
       </Box>
 
+      <Typography variant="subtitle1" align="center" mt={3}>
+        Current turn: {currentPlayer === 'playerOne' ? 'Player One' : 'Player Two'}
+      </Typography>
+
       <Box
         display="grid"
         gridTemplateColumns={`repeat(${boardSize}, 4rem)`}
