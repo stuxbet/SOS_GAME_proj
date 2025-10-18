@@ -1,7 +1,7 @@
 import React, {useRef, useState} from 'react';
 import {Box, Button, FormControlLabel, MenuItem, Radio, RadioGroup, Select, Typography} from '@mui/material';
 import type {SelectChangeEvent} from '@mui/material/Select';
-import type {SosMark} from './features/models';
+import type {SosMark, SosGameMode} from './features/models';
 import {GameController, type PlayerId} from './features/gameController';
 
 export const Gui: React.FC = () => {
@@ -23,6 +23,12 @@ export const Gui: React.FC = () => {
     syncState();
   };
 
+  const handleModeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const mode = event.target.value as SosGameMode;
+    controllerRef.current.setMode(mode);
+    syncState();
+  };
+
   const handleMove = (row: number, col: number) => {
     try {
       controllerRef.current.makeMove(row, col);
@@ -37,7 +43,7 @@ export const Gui: React.FC = () => {
       <Typography variant="h4" gutterBottom>Sprint 0 Simple GUI</Typography>
       <hr />
 
-      <RadioGroup name="Game Mode">
+      <RadioGroup name="Game Mode" value={gameState.mode} onChange={handleModeChange}>
         <FormControlLabel value="simple" control={<Radio />} label="Simple" />
         <FormControlLabel value="general" control={<Radio />} label="General" />
       </RadioGroup>

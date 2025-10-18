@@ -1,4 +1,10 @@
-import {SosGame, type SosCell, type SosMark} from './models';
+import {
+  type SosCell,
+  type SosMark,
+  type SosGameMode,
+  createSosGame,
+  type SosGame,
+} from './models';
 
 export type PlayerId = 'playerOne' | 'playerTwo';
 
@@ -6,9 +12,11 @@ export class GameController {
   private game: SosGame;
   private playerMarks: Record<PlayerId, SosMark>;
   private currentPlayer: PlayerId;
+  private mode: SosGameMode;
 
-  constructor(size = 3) {
-    this.game = new SosGame(size);
+  constructor(size = 3, mode: SosGameMode = 'simple') {
+    this.mode = mode;
+    this.game = createSosGame(mode, size);
     this.playerMarks = {playerOne: 'S', playerTwo: 'O'};
     this.currentPlayer = 'playerOne';
   }
@@ -18,12 +26,14 @@ export class GameController {
     size: number;
     currentPlayer: PlayerId;
     playerMarks: Record<PlayerId, SosMark>;
+    mode: SosGameMode;
   } {
     return {
       board: this.cloneBoard(),
       size: this.game.size,
       currentPlayer: this.currentPlayer,
       playerMarks: {...this.playerMarks},
+      mode: this.mode,
     };
   }
 
@@ -31,8 +41,16 @@ export class GameController {
     this.playerMarks[player] = mark;
   }
 
+  setMode(mode: SosGameMode) {
+    if (this.mode !== mode) {
+      this.mode = mode;
+      this.game = createSosGame(this.mode, this.game.size);
+      this.currentPlayer = 'playerOne';
+    }
+  }
+
   reset(size = this.game.size) {
-    this.game.reset(size);
+    this.game = createSosGame(this.mode, size);
     this.currentPlayer = 'playerOne';
   }
 
