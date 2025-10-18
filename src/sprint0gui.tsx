@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {Box, Button, FormControlLabel, MenuItem, Radio, RadioGroup, Select, Typography} from '@mui/material';
 import type {SelectChangeEvent} from '@mui/material/Select';
 import type {SosMark, SosGameMode} from './features/models';
@@ -6,6 +6,7 @@ import {GameController, type PlayerId} from './features/gameController';
 
 export const Gui: React.FC = () => {
   const controllerRef = useRef(new GameController(3));
+  const lastWinnerRef = useRef<PlayerId | null>(null);
   const [gameState, setGameState] = useState(() => controllerRef.current.getState());
   const syncState = () => setGameState(controllerRef.current.getState());
 
@@ -37,6 +38,14 @@ export const Gui: React.FC = () => {
       console.warn(error);
     }
   };
+
+  useEffect(() => {
+    if (gameState.winner && lastWinnerRef.current !== gameState.winner) {
+      const winnerLabel = gameState.winner === 'playerOne' ? 'Player One' : 'Player Two';
+      window.alert(`${winnerLabel} wins!`);
+    }
+    lastWinnerRef.current = gameState.winner ?? null;
+  }, [gameState.winner]);
 
   return (
     <Box sx={{p: 4, maxWidth: 720, width: '100%', mx: 'auto'}}>
@@ -100,6 +109,7 @@ export const Gui: React.FC = () => {
             <Button
               key={`${r}-${c}`}
               variant="outlined"
+              disabled={Boolean(cell) || Boolean(gameState.winner)}
               onClick={() => handleMove(r, c)}
               sx={{minWidth: 0, width: '100%', height: '100%'}}
             >
