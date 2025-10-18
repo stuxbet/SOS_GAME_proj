@@ -13,6 +13,7 @@ import type {SelectChangeEvent} from '@mui/material/Select';
 import {SosGame, type SosMark} from './features/models';
 
 const cloneBoard = (game: SosGame) => game.board.map((row) => [...row]);
+type PlayerId = 'playerOne' | 'playerTwo';
 
 export const Gui: React.FC = () => {
   const gameRef = useRef(new SosGame(3));
@@ -20,13 +21,20 @@ export const Gui: React.FC = () => {
   const [boardSnapshot, setBoardSnapshot] = useState(() => cloneBoard(gameRef.current));
   const [playerOneMark, setPlayerOneMark] = useState<SosMark>('S');
   const [playerTwoMark, setPlayerTwoMark] = useState<SosMark>('O');
-  const [currentPlayer, setCurrentPlayer] = useState<'playerOne' | 'playerTwo'>('playerOne');
+  const [currentPlayer, setCurrentPlayer] = useState<PlayerId>('playerOne');
+  const [moveLog, setMoveLog] = useState<Array<{player: PlayerId; mark: SosMark; row: number; col: number}>>([]);
 
   const handleSizeChange = (event: SelectChangeEvent) => {
     const size = Number(event.target.value);
     setBoardSize(size);
     gameRef.current.reset(size);
     setBoardSnapshot(cloneBoard(gameRef.current));
+    setMoveLog([]);
+    setCurrentPlayer('playerOne');
+  };
+
+  const recordMove = (player: PlayerId, row: number, col: number, mark: SosMark) => {
+    setMoveLog((prev) => [...prev, {player, row, col, mark}]);
   };
 
   const handleMove = (row: number, col: number) => {
@@ -34,6 +42,7 @@ export const Gui: React.FC = () => {
     try {
       gameRef.current.place(row, col, mark);
       setBoardSnapshot(cloneBoard(gameRef.current));
+      recordMove(currentPlayer, row, col, mark);
       setCurrentPlayer((prev) => (prev === 'playerOne' ? 'playerTwo' : 'playerOne'));
     } catch (error) {
       console.warn(error);
