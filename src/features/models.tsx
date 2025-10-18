@@ -3,7 +3,10 @@ export type SosCell = SosMark | null;
 
 export class SosGame {
   board: SosCell[][];
-  constructor(public size = 3) {
+  size: number;
+
+  constructor(size = 3) {
+    this.size = size;
     this.board = this.makeBoard(size);
   }
   private makeBoard(size: number) {
@@ -13,6 +16,7 @@ export class SosGame {
     this.size = size;
     this.board = this.makeBoard(size);
   }
+  
   place(row: number, col: number, mark: SosMark) {
     if (!this.board[row] || col < 0 || col >= this.size || this.board[row][col]) {
       throw new Error('Invalid move');

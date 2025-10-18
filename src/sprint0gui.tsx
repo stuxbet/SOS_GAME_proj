@@ -1,49 +1,32 @@
 import React, {useRef, useState} from 'react';
-import {
-  Box,
-  Button,
-  FormControlLabel,
-  MenuItem,
-  Radio,
-  RadioGroup,
-  Select,
-  Typography,
-} from '@mui/material';
+import {Box, Button, FormControlLabel, MenuItem, Radio, RadioGroup, Select, Typography} from '@mui/material';
 import type {SelectChangeEvent} from '@mui/material/Select';
-import {SosGame, type SosMark} from './features/models';
-
-const cloneBoard = (game: SosGame) => game.board.map((row) => [...row]);
-type PlayerId = 'playerOne' | 'playerTwo';
+import type {SosMark} from './features/models';
+import {GameController, type PlayerId} from './features/gameController';
 
 export const Gui: React.FC = () => {
-  const gameRef = useRef(new SosGame(3));
-  const [boardSize, setBoardSize] = useState(3);
-  const [boardSnapshot, setBoardSnapshot] = useState(() => cloneBoard(gameRef.current));
-  const [playerOneMark, setPlayerOneMark] = useState<SosMark>('S');
-  const [playerTwoMark, setPlayerTwoMark] = useState<SosMark>('O');
-  const [currentPlayer, setCurrentPlayer] = useState<PlayerId>('playerOne');
-  const [moveLog, setMoveLog] = useState<Array<{player: PlayerId; mark: SosMark; row: number; col: number}>>([]);
+  const controllerRef = useRef(new GameController(3));
+  const [gameState, setGameState] = useState(() => controllerRef.current.getState());
+  const syncState = () => setGameState(controllerRef.current.getState());
 
   const handleSizeChange = (event: SelectChangeEvent) => {
     const size = Number(event.target.value);
-    setBoardSize(size);
-    gameRef.current.reset(size);
-    setBoardSnapshot(cloneBoard(gameRef.current));
-    setMoveLog([]);
-    setCurrentPlayer('playerOne');
+    if (!Number.isInteger(size)) {
+      return;
+    }
+    controllerRef.current.reset(size);
+    syncState();
   };
 
-  const recordMove = (player: PlayerId, row: number, col: number, mark: SosMark) => {
-    setMoveLog((prev) => [...prev, {player, row, col, mark}]);
+  const handlePlayerMarkChange = (player: PlayerId, mark: SosMark) => {
+    controllerRef.current.setPlayerMark(player, mark);
+    syncState();
   };
 
   const handleMove = (row: number, col: number) => {
-    const mark: SosMark = currentPlayer === 'playerOne' ? playerOneMark : playerTwoMark;
     try {
-      gameRef.current.place(row, col, mark);
-      setBoardSnapshot(cloneBoard(gameRef.current));
-      recordMove(currentPlayer, row, col, mark);
-      setCurrentPlayer((prev) => (prev === 'playerOne' ? 'playerTwo' : 'playerOne'));
+      controllerRef.current.makeMove(row, col);
+      syncState();
     } catch (error) {
       console.warn(error);
     }
@@ -65,8 +48,8 @@ export const Gui: React.FC = () => {
           <RadioGroup
             row
             name="player-one-mark"
-            value={playerOneMark}
-            onChange={(event) => setPlayerOneMark(event.target.value as SosMark)}
+            value={gameState.playerMarks.playerOne}
+            onChange={(event) => handlePlayerMarkChange('playerOne', event.target.value as SosMark)}
           >
             <FormControlLabel value="S" control={<Radio />} label="S" />
             <FormControlLabel value="O" control={<Radio />} label="O" />
@@ -77,8 +60,8 @@ export const Gui: React.FC = () => {
           <RadioGroup
             row
             name="player-two-mark"
-            value={playerTwoMark}
-            onChange={(event) => setPlayerTwoMark(event.target.value as SosMark)}
+            value={gameState.playerMarks.playerTwo}
+            onChange={(event) => handlePlayerMarkChange('playerTwo', event.target.value as SosMark)}
           >
             <FormControlLabel value="S" control={<Radio />} label="S" />
             <FormControlLabel value="O" control={<Radio />} label="O" />
@@ -87,26 +70,26 @@ export const Gui: React.FC = () => {
       </Box>
 
       <Box sx={{maxWidth: 50, mt: 2}}>
-        <Select fullWidth value={boardSize} onChange={handleSizeChange}>
+        <Select fullWidth value={String(gameState.size)} onChange={handleSizeChange}>
           {[3, 4, 5, 6, 7, 8, 9, 10].map((size) => (
-            <MenuItem key={size} value={size}>{`${size}`}</MenuItem>
+            <MenuItem key={size} value={String(size)}>{`${size}`}</MenuItem>
           ))}
         </Select>
       </Box>
 
       <Typography variant="subtitle1" align="center" mt={3}>
-        Current turn: {currentPlayer === 'playerOne' ? 'Player One' : 'Player Two'}
+        Current turn: {gameState.currentPlayer === 'playerOne' ? 'Player One' : 'Player Two'}
       </Typography>
 
       <Box
         display="grid"
-        gridTemplateColumns={`repeat(${boardSize}, 4rem)`}
+        gridTemplateColumns={`repeat(${gameState.size}, 4rem)`}
         gridAutoRows="4rem"
         gap={1.5}
         justifyContent="center"
         mt={3}
       >
-        {boardSnapshot.flatMap((row, r) =>
+        {gameState.board.flatMap((row, r) =>
           row.map((cell, c) => (
             <Button
               key={`${r}-${c}`}
