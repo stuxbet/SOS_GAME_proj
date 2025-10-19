@@ -1,21 +1,23 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {Box, Button, FormControlLabel, MenuItem, Radio, RadioGroup, Select, Typography} from '@mui/material';
-import type {SelectChangeEvent} from '@mui/material/Select';
+import {Box, Button, FormControlLabel, Radio, RadioGroup, TextField, Typography} from '@mui/material';
 import type {PlayerId, SosMark, SosGameMode, WinnerId} from './features/models';
 import {GameController} from './features/gameController';
 
 export const Gui: React.FC = () => {
   const controllerRef = useRef(new GameController(3));
   const lastWinnerRef = useRef<WinnerId>(null);
+  const MIN_BOARD_SIZE = 3;
+  const MAX_BOARD_SIZE = 10;
   const [gameState, setGameState] = useState(() => controllerRef.current.getState());
   const syncState = () => setGameState(controllerRef.current.getState());
 
-  const handleSizeChange = (event: SelectChangeEvent) => {
-    const size = Number(event.target.value);
-    if (!Number.isInteger(size)) {
+  const handleSizeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = Number(event.target.value);
+    if (!Number.isFinite(value)) {
       return;
     }
-    controllerRef.current.reset(size);
+    const clamped = Math.min(MAX_BOARD_SIZE, Math.max(MIN_BOARD_SIZE, Math.round(value)));
+    controllerRef.current.reset(clamped);
     syncState();
   };
 
@@ -90,12 +92,15 @@ export const Gui: React.FC = () => {
         </Box>
       </Box>
 
-      <Box sx={{maxWidth: 50, mt: 2}}>
-        <Select fullWidth value={String(gameState.size)} onChange={handleSizeChange}>
-          {[3, 4, 5, 6, 7, 8, 9, 10].map((size) => (
-            <MenuItem key={size} value={String(size)}>{`${size}`}</MenuItem>
-          ))}
-        </Select>
+      <Box sx={{maxWidth: 80, mt: 2}}>
+        <TextField
+          fullWidth
+          label="Board Size"
+          type="number"
+          value={gameState.size}
+          onChange={handleSizeChange}
+          inputProps={{min: MIN_BOARD_SIZE, max: MAX_BOARD_SIZE}}
+        />
       </Box>
 
       <Typography variant="subtitle1" align="center" mt={3}>
