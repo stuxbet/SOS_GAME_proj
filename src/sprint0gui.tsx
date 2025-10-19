@@ -1,12 +1,12 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {Box, Button, FormControlLabel, MenuItem, Radio, RadioGroup, Select, Typography} from '@mui/material';
 import type {SelectChangeEvent} from '@mui/material/Select';
-import type {SosMark, SosGameMode} from './features/models';
-import {GameController, type PlayerId} from './features/gameController';
+import type {PlayerId, SosMark, SosGameMode, WinnerId} from './features/models';
+import {GameController} from './features/gameController';
 
 export const Gui: React.FC = () => {
   const controllerRef = useRef(new GameController(3));
-  const lastWinnerRef = useRef<PlayerId | null>(null);
+  const lastWinnerRef = useRef<WinnerId>(null);
   const [gameState, setGameState] = useState(() => controllerRef.current.getState());
   const syncState = () => setGameState(controllerRef.current.getState());
 
@@ -41,8 +41,14 @@ export const Gui: React.FC = () => {
 
   useEffect(() => {
     if (gameState.winner && lastWinnerRef.current !== gameState.winner) {
-      const winnerLabel = gameState.winner === 'playerOne' ? 'Player One' : 'Player Two';
-      window.alert(`${winnerLabel} wins!`);
+      let message: string;
+      if (gameState.winner === 'draw') {
+        message = 'Game ends in a draw.';
+      } else {
+        const winnerLabel = gameState.winner === 'playerOne' ? 'Player One' : 'Player Two';
+        message = `${winnerLabel} wins!`;
+      }
+      window.alert(message);
     }
     lastWinnerRef.current = gameState.winner ?? null;
   }, [gameState.winner]);
@@ -93,7 +99,10 @@ export const Gui: React.FC = () => {
       </Box>
 
       <Typography variant="subtitle1" align="center" mt={3}>
-        Current turn: {gameState.currentPlayer === 'playerOne' ? 'Player One' : 'Player Two'}
+        {`Current turn: ${gameState.currentPlayer === 'playerOne' ? 'Player One' : 'Player Two'}`}
+      </Typography>
+      <Typography variant="subtitle2" align="center" mt={1}>
+        {`Scores — Player One: ${gameState.scores.playerOne} | Player Two: ${gameState.scores.playerTwo}`}
       </Typography>
 
       <Box
