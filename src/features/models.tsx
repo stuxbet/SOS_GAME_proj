@@ -86,7 +86,12 @@ export class SimpleSosGame extends BaseSosGame {
   }
 
   protected resolveOutcome(player: PlayerId, sequences: number): MoveOutcome {
-    const winner: WinnerId = sequences > 0 ? player : null;
+    let winner: WinnerId = null;
+    if (sequences > 0) {
+      winner = player;
+    } else if (this.isBoardFull()) {
+      winner = 'draw';
+    }
     return {
       sequences,
       extraTurn: false,
@@ -170,4 +175,3 @@ export type SosGame = BaseSosGame;
 export const createSosGame = (mode: SosGameMode, size = 3): SosGame => {
   return mode === 'general' ? new GeneralSosGame(size) : new SimpleSosGame(size);
 };
-
