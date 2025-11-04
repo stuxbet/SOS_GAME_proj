@@ -76,6 +76,46 @@ test('4.3', () => {
   expect(controller.getState().currentPlayer).toBe('playerOne');
 });
 
+test('5.1', () => {
+  const controller = new GameController(3);
+  controller.makeMove(0, 0);
+  controller.makeMove(0, 1);
+  controller.makeMove(0, 2);
+
+  const state = controller.getState();
+  expect(state.winner).toBe('playerOne');
+});
+
+test('5.2', () => {
+  const controller = new GameController(3);
+  controller.setPlayerMark('playerTwo', 'S');
+
+  const fillOrder: Array<[number, number]> = [
+    [0, 0], [0, 1], [0, 2],
+    [1, 0], [1, 1], [1, 2],
+    [2, 0], [2, 1], [2, 2],
+  ];
+
+  fillOrder.forEach(([row, col]) => controller.makeMove(row, col));
+
+  const state = controller.getState();
+  expect(state.board.every((row) => row.every((cell) => cell !== null))).toBe(true);
+  expect(state.winner).toBe('draw');
+});
+
+test('5.3', () => {
+  const controller = new GameController(3);
+  controller.makeMove(0, 0);
+  controller.makeMove(0, 1);
+  controller.makeMove(0, 2);
+  controller.makeMove(1, 0);
+
+
+  const state = controller.getState();
+  expect(state.board[1][0]).toBeNull();
+  expect(state.winner).toBe('playerOne');
+});
+
 test('6.1', () => {
   const controller = new GameController(3, 'general');
 
@@ -101,4 +141,21 @@ test('6.2', () => {
 
   expect(state.currentPlayer).toBe('playerOne');        
   expect(state.scores.playerOne).toBeGreaterThan(0);
+});
+
+test('7.1', () => {
+  const control = new GameController(3, 'general');
+
+  const move: Array<[number, number]> = [
+    [0, 0], [0, 1], [0, 2],
+    [1, 0], [1, 1], [1, 2],
+    [2, 0], [2, 1], [2, 2],
+  ];
+
+  move.forEach(([row, col]) => control.makeMove(row, col));
+
+  const state = control.getState();
+  expect(state.board.every((row) => row.every((cell) => cell !== null))).toBe(true);
+  expect(state.scores.playerOne).toBeGreaterThan(state.scores.playerTwo);
+  expect(state.winner).toBe('playerOne');
 });
