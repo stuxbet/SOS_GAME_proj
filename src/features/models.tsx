@@ -4,6 +4,7 @@ export type SosGameMode = 'simple' | 'general';
 export type PlayerId = 'playerOne' | 'playerTwo';
 export type WinnerId = PlayerId | 'draw' | null;
 export type Scores = Record<PlayerId, number>;
+export type Computer = boolean;
 
 export type MoveOutcome = {
   sequences: number;

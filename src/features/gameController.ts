@@ -5,6 +5,7 @@ import {
   type PlayerId,
   type WinnerId,
   type Scores,
+  type Computer,
   createSosGame,
   type SosGame,
   type MoveOutcome,
@@ -15,6 +16,7 @@ export class GameController {
   private static readonly MAX_SIZE = 10;
   private game: SosGame;
   private playerMarks: Record<PlayerId, SosMark>;
+  private playerComputer: Record<PlayerId, Computer>;
   private currentPlayer: PlayerId;
   private mode: SosGameMode;
   private winner: WinnerId;
@@ -26,6 +28,7 @@ export class GameController {
     const clampedSize = this.clampSize(size);
     this.game = createSosGame(mode, clampedSize);
     this.playerMarks = {playerOne: 'S', playerTwo: 'O'};
+    this.playerComputer = {playerOne: false, playerTwo: false};
     this.currentPlayer = 'playerOne';
     this.scores = {playerOne: 0, playerTwo: 0};
     this.winner = null;
@@ -37,6 +40,7 @@ export class GameController {
     size: number;
     currentPlayer: PlayerId;
     playerMarks: Record<PlayerId, SosMark>;
+    playerComputer: Record<PlayerId, Computer>;
     mode: SosGameMode;
     winner: WinnerId;
     scores: Scores;
@@ -46,6 +50,7 @@ export class GameController {
       size: this.game.size,
       currentPlayer: this.currentPlayer,
       playerMarks: {...this.playerMarks},
+      playerComputer: {...this.playerComputer},
       mode: this.mode,
       winner: this.winner,
       scores: {...this.scores},
@@ -54,6 +59,10 @@ export class GameController {
 
   setPlayerMark(player: PlayerId, mark: SosMark) {
     this.playerMarks[player] = mark;
+  }
+
+  setPlayerComputer(player: PlayerId, Computer: Computer) {
+    this.playerComputer[player] = Computer;
   }
 
   setMode(mode: SosGameMode) {

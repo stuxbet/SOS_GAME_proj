@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {Box, Button, FormControlLabel, Radio, RadioGroup, TextField, Typography} from '@mui/material';
-import type {PlayerId, SosMark, SosGameMode, WinnerId} from './features/models';
+import type {Computer, PlayerId, SosMark, SosGameMode, WinnerId} from './features/models';
 import {GameController} from './features/gameController';
 
 export const Gui: React.FC = () => {
@@ -23,6 +23,11 @@ export const Gui: React.FC = () => {
 
   const handlePlayerMarkChange = (player: PlayerId, mark: SosMark) => {
     controllerRef.current.setPlayerMark(player, mark);
+    syncState();
+  };
+
+  const handlePlayerComputerChange = (player: PlayerId, isComputer: Computer) => {
+    controllerRef.current.setPlayerComputer(player, isComputer);
     syncState();
   };
 
@@ -69,6 +74,14 @@ export const Gui: React.FC = () => {
         <Box>
           <Typography variant="subtitle1" gutterBottom>Player One</Typography>
           <RadioGroup
+            name="player-one-type"
+            value={gameState.playerComputer.playerOne ? 'computer' : 'human'}
+            onChange={(event) => handlePlayerComputerChange('playerOne', event.target.value === 'computer')}
+          >
+            <FormControlLabel value="human" control={<Radio />} label="Human" />
+            <FormControlLabel value="computer" control={<Radio />} label="Computer" />
+          </RadioGroup>
+          <RadioGroup
             row
             name="player-one-mark"
             value={gameState.playerMarks.playerOne}
@@ -80,6 +93,14 @@ export const Gui: React.FC = () => {
         </Box>
         <Box>
           <Typography variant="subtitle1" gutterBottom>Player Two</Typography>
+          <RadioGroup
+            name="player-two-type"
+            value={gameState.playerComputer.playerTwo ? 'computer' : 'human'}
+            onChange={(event) => handlePlayerComputerChange('playerTwo', event.target.value === 'computer')}
+          >
+            <FormControlLabel value="human" control={<Radio />} label="Human" />
+            <FormControlLabel value="computer" control={<Radio />} label="Computer" />
+          </RadioGroup>
           <RadioGroup
             row
             name="player-two-mark"
