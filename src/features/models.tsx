@@ -1,8 +1,8 @@
-export type SosMark = 'S' | 'O';
+export type SosMark = "S" | "O";
 export type SosCell = SosMark | null;
-export type SosGameMode = 'simple' | 'general';
-export type PlayerId = 'playerOne' | 'playerTwo';
-export type WinnerId = PlayerId | 'draw' | null;
+export type SosGameMode = "simple" | "general";
+export type PlayerId = "playerOne" | "playerTwo";
+export type WinnerId = PlayerId | "draw" | null;
 export type Scores = Record<PlayerId, number>;
 export type Computer = boolean;
 
@@ -27,9 +27,19 @@ abstract class BaseSosGame {
     this.board = this.makeBoard(size);
   }
 
-  playMove(row: number, col: number, mark: SosMark, player: PlayerId): MoveOutcome {
-    if (!this.board[row] || col < 0 || col >= this.size || this.board[row][col]) {
-      throw new Error('Invalid move');
+  playMove(
+    row: number,
+    col: number,
+    mark: SosMark,
+    player: PlayerId
+  ): MoveOutcome {
+    if (
+      !this.board[row] ||
+      col < 0 ||
+      col >= this.size ||
+      this.board[row][col]
+    ) {
+      throw new Error("Invalid move");
     }
     this.board[row][col] = mark;
     const sequences = this.onMarkPlaced(row, col, mark);
@@ -40,10 +50,13 @@ abstract class BaseSosGame {
     return 0;
   }
 
-  protected abstract resolveOutcome(player: PlayerId, sequences: number): MoveOutcome;
+  protected abstract resolveOutcome(
+    player: PlayerId,
+    sequences: number
+  ): MoveOutcome;
 
   protected createEmptyScores(): Scores {
-    return {playerOne: 0, playerTwo: 0};
+    return { playerOne: 0, playerTwo: 0 };
   }
 
   protected isBoardFull(): boolean {
@@ -51,7 +64,7 @@ abstract class BaseSosGame {
   }
 
   private makeBoard(size: number) {
-    return Array.from({length: size}, () => Array<SosCell>(size).fill(null));
+    return Array.from({ length: size }, () => Array<SosCell>(size).fill(null));
   }
 }
 
@@ -63,7 +76,8 @@ export class SimpleSosGame extends BaseSosGame {
       [1, 1],
       [1, -1],
     ];
-    const inBounds = (r: number, c: number) => r >= 0 && r < this.size && c >= 0 && c < this.size;
+    const inBounds = (r: number, c: number) =>
+      r >= 0 && r < this.size && c >= 0 && c < this.size;
     let matches = 0;
 
     for (const [dr, dc] of directions) {
@@ -76,8 +90,10 @@ export class SimpleSosGame extends BaseSosGame {
         if (!positions.every(([r, c]) => inBounds(r, c))) {
           continue;
         }
-        const [first, middle, last] = positions.map(([r, c]) => this.board[r][c]);
-        if (first === 'S' && middle === 'O' && last === 'S') {
+        const [first, middle, last] = positions.map(
+          ([r, c]) => this.board[r][c]
+        );
+        if (first === "S" && middle === "O" && last === "S") {
           matches += 1;
         }
       }
@@ -91,7 +107,7 @@ export class SimpleSosGame extends BaseSosGame {
     if (sequences > 0) {
       winner = player;
     } else if (this.isBoardFull()) {
-      winner = 'draw';
+      winner = "draw";
     }
     return {
       sequences,
@@ -122,7 +138,8 @@ export class GeneralSosGame extends BaseSosGame {
       [1, 1],
       [1, -1],
     ];
-    const inBounds = (r: number, c: number) => r >= 0 && r < this.size && c >= 0 && c < this.size;
+    const inBounds = (r: number, c: number) =>
+      r >= 0 && r < this.size && c >= 0 && c < this.size;
     let matches = 0;
 
     for (const [dr, dc] of directions) {
@@ -135,8 +152,10 @@ export class GeneralSosGame extends BaseSosGame {
         if (!positions.every(([r, c]) => inBounds(r, c))) {
           continue;
         }
-        const [first, middle, last] = positions.map(([r, c]) => this.board[r][c]);
-        if (first === 'S' && middle === 'O' && last === 'S') {
+        const [first, middle, last] = positions.map(
+          ([r, c]) => this.board[r][c]
+        );
+        if (first === "S" && middle === "O" && last === "S") {
           matches += 1;
         }
       }
@@ -152,13 +171,13 @@ export class GeneralSosGame extends BaseSosGame {
 
     let winner: WinnerId = null;
     if (this.isBoardFull()) {
-      const {playerOne, playerTwo} = this.scores;
+      const { playerOne, playerTwo } = this.scores;
       if (playerOne > playerTwo) {
-        winner = 'playerOne';
+        winner = "playerOne";
       } else if (playerTwo > playerOne) {
-        winner = 'playerTwo';
+        winner = "playerTwo";
       } else {
-        winner = 'draw';
+        winner = "draw";
       }
     }
 
@@ -166,7 +185,7 @@ export class GeneralSosGame extends BaseSosGame {
       sequences,
       extraTurn: sequences > 0,
       winner,
-      scores: {...this.scores},
+      scores: { ...this.scores },
     };
   }
 }
@@ -174,5 +193,7 @@ export class GeneralSosGame extends BaseSosGame {
 export type SosGame = BaseSosGame;
 
 export const createSosGame = (mode: SosGameMode, size = 3): SosGame => {
-  return mode === 'general' ? new GeneralSosGame(size) : new SimpleSosGame(size);
+  return mode === "general"
+    ? new GeneralSosGame(size)
+    : new SimpleSosGame(size);
 };
