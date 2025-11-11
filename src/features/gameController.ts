@@ -102,17 +102,27 @@ export class GameController {
   }
 
   makeComputerMove(): boolean {
-    const active = this.players[this.currentPlayer];
-    if (this.winner || !active.isComputer()) {
+    if (this.winner) {
       return false;
     }
-    const move = active.takeTurn(this.game);
-    if (!move) {
-      return false;
+
+    let moved = false;
+    while (!this.winner) {
+      const active = this.players[this.currentPlayer];
+      if (!active.isComputer()) {
+        break;
+      }
+      const move = active.takeTurn(this.game);
+      if (!move) {
+        break;
+      }
+      this.makeMove(move.row, move.col);
+      moved = true;
+      if (!this.players[this.currentPlayer].isComputer()) {
+        break;
+      }
     }
-    const { row, col } = move;
-    this.makeMove(row, col);
-    return true;
+    return moved;
   }
 
   makeMove(row: number, col: number) {
