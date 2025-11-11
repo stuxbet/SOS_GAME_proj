@@ -5,18 +5,22 @@ import {
   type PlayerId,
   type WinnerId,
   type Scores,
-  type Computer,
   createSosGame,
   type SosGame,
   type MoveOutcome,
 } from "./models";
+import {
+  BasePlayer,
+  ComputerPlayer,
+  HumanPlayer,
+  type PlayerSnapshot,
+} from "./player";
 
 export class GameController {
   private static readonly MIN_SIZE = 3;
   private static readonly MAX_SIZE = 10;
   private game: SosGame;
-  private playerMarks: Record<PlayerId, SosMark>;
-  private playerComputer: Record<PlayerId, Computer>;
+  private players: Record<PlayerId, BasePlayer>;
   private currentPlayer: PlayerId;
   private mode: SosGameMode;
   private winner: WinnerId;
@@ -27,8 +31,10 @@ export class GameController {
     this.mode = mode;
     const clampedSize = this.clampSize(size);
     this.game = createSosGame(mode, clampedSize);
-    this.playerMarks = { playerOne: "S", playerTwo: "O" };
-    this.playerComputer = { playerOne: false, playerTwo: false };
+    this.players = {
+      playerOne: new HumanPlayer("playerOne", "S"),
+      playerTwo: new HumanPlayer("playerTwo", "O"),
+    };
     this.currentPlayer = "playerOne";
     this.scores = { playerOne: 0, playerTwo: 0 };
     this.winner = null;
@@ -39,30 +45,41 @@ export class GameController {
     board: SosCell[][];
     size: number;
     currentPlayer: PlayerId;
-    playerMarks: Record<PlayerId, SosMark>;
-    playerComputer: Record<PlayerId, Computer>;
+    players: Record<PlayerId, PlayerSnapshot>;
     mode: SosGameMode;
     winner: WinnerId;
     scores: Scores;
+    hasStarted: boolean;
   } {
     return {
       board: this.cloneBoard(),
       size: this.game.size,
       currentPlayer: this.currentPlayer,
-      playerMarks: { ...this.playerMarks },
-      playerComputer: { ...this.playerComputer },
+      players: this.snapshotPlayers(),
       mode: this.mode,
       winner: this.winner,
       scores: { ...this.scores },
+      hasStarted: this.hasStarted,
     };
   }
 
   setPlayerMark(player: PlayerId, mark: SosMark) {
-    this.playerMarks[player] = mark;
+    this.players[player].setMark(mark);
   }
 
-  setPlayerComputer(player: PlayerId, Computer: Computer) {
-    this.playerComputer[player] = Computer;
+  setPlayerComputer(player: PlayerId, isComputer: boolean) {
+    if (this.hasStarted) {
+      return;
+    }
+    const current = this.players[player];
+    if (current.isComputer() === isComputer) {
+      return;
+    }
+    this.players[player] = this.createPlayer(
+      player,
+      current.getMark(),
+      isComputer
+    );
   }
 
   setMode(mode: SosGameMode) {
@@ -85,14 +102,15 @@ export class GameController {
   }
 
   makeComputerMove(): boolean {
-    if (this.winner || !this.playerComputer[this.currentPlayer]) {
+    const active = this.players[this.currentPlayer];
+    if (this.winner || !active.isComputer()) {
       return false;
     }
-    const target = this.findFirstOpenCell();
-    if (!target) {
+    const move = active.takeTurn(this.game);
+    if (!move) {
       return false;
     }
-    const [row, col] = target;
+    const { row, col } = move;
     this.makeMove(row, col);
     return true;
   }
@@ -102,7 +120,7 @@ export class GameController {
       return;
     }
     const activePlayer = this.currentPlayer;
-    const mark = this.playerMarks[this.currentPlayer];
+    const mark = this.players[this.currentPlayer].getMark();
     const outcome: MoveOutcome = this.game.playMove(
       row,
       col,
@@ -122,19 +140,25 @@ export class GameController {
     }
   }
 
-  private findFirstOpenCell(): [number, number] | null {
-    for (let r = 0; r < this.game.size; r += 1) {
-      for (let c = 0; c < this.game.size; c += 1) {
-        if (this.game.board[r][c] === null) {
-          return [r, c];
-        }
-      }
-    }
-    return null;
-  }
-
   private cloneBoard(): SosCell[][] {
     return this.game.board.map((row) => [...row]);
+  }
+
+  private snapshotPlayers(): Record<PlayerId, PlayerSnapshot> {
+    return {
+      playerOne: this.players.playerOne.toSnapshot(this.scores.playerOne),
+      playerTwo: this.players.playerTwo.toSnapshot(this.scores.playerTwo),
+    };
+  }
+
+  private createPlayer(
+    player: PlayerId,
+    mark: SosMark,
+    isComputer: boolean
+  ): BasePlayer {
+    return isComputer
+      ? new ComputerPlayer(player, mark)
+      : new HumanPlayer(player, mark);
   }
 
   private togglePlayer(player: PlayerId): PlayerId {

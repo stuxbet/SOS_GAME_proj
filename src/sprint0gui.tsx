@@ -8,13 +8,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import type {
-  Computer,
-  PlayerId,
-  SosMark,
-  SosGameMode,
-  WinnerId,
-} from "./features/models";
+import type { PlayerId, SosMark, SosGameMode, WinnerId } from "./features/models";
 import { GameController } from "./features/gameController";
 
 export const Gui: React.FC = () => {
@@ -26,7 +20,9 @@ export const Gui: React.FC = () => {
     controllerRef.current.getState()
   );
   const syncState = () => setGameState(controllerRef.current.getState());
-  const isComputerTurn = gameState.playerComputer[gameState.currentPlayer];
+  const isComputerTurn =
+    gameState.players[gameState.currentPlayer].isComputer;
+  const playerConfigLocked = gameState.hasStarted;
 
   const handleSizeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = Number(event.target.value);
@@ -46,10 +42,7 @@ export const Gui: React.FC = () => {
     syncState();
   };
 
-  const handlePlayerComputerChange = (
-    player: PlayerId,
-    isComputer: Computer
-  ) => {
+  const handlePlayerComputerChange = (player: PlayerId, isComputer: boolean) => {
     controllerRef.current.setPlayerComputer(player, isComputer);
     syncState();
   };
@@ -119,25 +112,31 @@ export const Gui: React.FC = () => {
           </Typography>
           <RadioGroup
             name="player-one-type"
-            value={gameState.playerComputer.playerOne ? "computer" : "human"}
+            value={String(gameState.players.playerOne.isComputer)}
             onChange={(event) =>
               handlePlayerComputerChange(
                 "playerOne",
-                event.target.value === "computer"
+                event.target.value === "true"
               )
             }
           >
-            <FormControlLabel value="human" control={<Radio />} label="Human" />
             <FormControlLabel
-              value="computer"
+              value="false"
+              control={<Radio />}
+              label="Human"
+              disabled={playerConfigLocked}
+            />
+            <FormControlLabel
+              value="true"
               control={<Radio />}
               label="Computer"
+              disabled={playerConfigLocked}
             />
           </RadioGroup>
           <RadioGroup
             row
             name="player-one-mark"
-            value={gameState.playerMarks.playerOne}
+            value={gameState.players.playerOne.mark}
             onChange={(event) =>
               handlePlayerMarkChange("playerOne", event.target.value as SosMark)
             }
@@ -152,25 +151,31 @@ export const Gui: React.FC = () => {
           </Typography>
           <RadioGroup
             name="player-two-type"
-            value={gameState.playerComputer.playerTwo ? "computer" : "human"}
+            value={String(gameState.players.playerTwo.isComputer)}
             onChange={(event) =>
               handlePlayerComputerChange(
                 "playerTwo",
-                event.target.value === "computer"
+                event.target.value === "true"
               )
             }
           >
-            <FormControlLabel value="human" control={<Radio />} label="Human" />
             <FormControlLabel
-              value="computer"
+              value="false"
+              control={<Radio />}
+              label="Human"
+              disabled={playerConfigLocked}
+            />
+            <FormControlLabel
+              value="true"
               control={<Radio />}
               label="Computer"
+              disabled={playerConfigLocked}
             />
           </RadioGroup>
           <RadioGroup
             row
             name="player-two-mark"
-            value={gameState.playerMarks.playerTwo}
+            value={gameState.players.playerTwo.mark}
             onChange={(event) =>
               handlePlayerMarkChange("playerTwo", event.target.value as SosMark)
             }
@@ -198,7 +203,7 @@ export const Gui: React.FC = () => {
         }`}
       </Typography>
       <Typography variant="subtitle2" align="center" mt={1}>
-        {`Scores — Player One: ${gameState.scores.playerOne} | Player Two: ${gameState.scores.playerTwo}`}
+        {`Scores — Player One: ${gameState.players.playerOne.score} | Player Two: ${gameState.players.playerTwo.score}`}
       </Typography>
 
       <Box
