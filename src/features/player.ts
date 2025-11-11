@@ -46,40 +46,12 @@ export class HumanPlayer extends BasePlayer {
   }
 }
 
-export interface Algo {
-  chooseMove(game: SosGame, player: BasePlayer): SosMove | null;
-}
-
-class FirstOpenCell implements Algo {
-  chooseMove(game: SosGame): SosMove | null {
-    for (let row = 0; row < game.size; row += 1) {
-      for (let col = 0; col < game.size; col += 1) {
-        if (game.board[row][col] === null) {
-          return { row, col };
-        }
-      }
-    }
-    return null;
-  }
-}
-
 export class ComputerPlayer extends BasePlayer {
-  private algo: Algo;
-
-  constructor(id: PlayerId, mark: SosMark, algo: Algo = new FirstOpenCell()) {
-    super(id, mark);
-    this.algo = algo;
-  }
-
   isComputer(): boolean {
     return true;
   }
 
-  setStrategy(algo: Algo) {
-    this.algo = algo;
-  }
-
   override takeTurn(game: SosGame): SosMove | null {
-    return this.algo.chooseMove(game, this);
+    return game.getComputerMove();
   }
 }

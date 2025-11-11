@@ -108,11 +108,10 @@ export class GameController {
 
     let moved = false;
     while (!this.winner) {
-      const active = this.players[this.currentPlayer];
-      if (!active.isComputer()) {
+      if (!this.players[this.currentPlayer].isComputer()) {
         break;
       }
-      const move = active.takeTurn(this.game);
+      const move = this.game.getComputerMove();
       if (!move) {
         break;
       }

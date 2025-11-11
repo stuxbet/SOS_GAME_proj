@@ -16,10 +16,12 @@ export type MoveOutcome = {
 abstract class BaseSosGame {
   board: SosCell[][];
   size: number;
+  protected computerMovePicker: () => SosMove | null;
 
   constructor(size = 3) {
     this.size = size;
     this.board = this.makeBoard(size);
+    this.computerMovePicker = () => this.findFirstOpenCell();
   }
 
   reset(size = this.size) {
@@ -61,6 +63,37 @@ abstract class BaseSosGame {
 
   protected isBoardFull(): boolean {
     return this.board.every((row) => row.every((cell) => cell !== null));
+  }
+
+  getComputerMove(): SosMove | null {
+    return this.computerMovePicker();
+  }
+
+  protected findFirstOpenCell(): SosMove | null {
+    for (let row = 0; row < this.size; row += 1) {
+      for (let col = 0; col < this.size; col += 1) {
+        if (this.board[row][col] === null) {
+          return { row, col };
+        }
+      }
+    }
+    return null;
+  }
+
+  protected findRandomOpenCell(): SosMove | null {
+    const available: SosMove[] = [];
+    for (let row = 0; row < this.size; row += 1) {
+      for (let col = 0; col < this.size; col += 1) {
+        if (this.board[row][col] === null) {
+          available.push({ row, col });
+        }
+      }
+    }
+    if (available.length === 0) {
+      return null;
+    }
+    const index = Math.floor(Math.random() * available.length);
+    return available[index];
   }
 
   private makeBoard(size: number) {
@@ -124,6 +157,7 @@ export class GeneralSosGame extends BaseSosGame {
   constructor(size = 3) {
     super(size);
     this.scores = this.createEmptyScores();
+    this.computerMovePicker = () => this.findRandomOpenCell();
   }
 
   reset(size = this.size) {
