@@ -179,3 +179,69 @@ test("7.1", () => {
   expect(state.scores.playerOne).toBeGreaterThan(state.scores.playerTwo);
   expect(state.winner).toBe("playerOne");
 });
+
+test("8.1", () => {
+  const controller = new GameController(3);
+  controller.setPlayerComputer("playerTwo", true);
+
+  controller.makeMove(0, 0);
+
+  controller.makeComputerMove();
+  const state = controller.getState();
+
+  expect(state.board.flat().filter(Boolean).length).toBe(2);
+});
+
+test("8.2", () => {
+  const controller = new GameController(3, "general");
+  controller.setPlayerComputer("playerOne", true);
+  controller.setPlayerMark("playerOne", "O");
+  controller.setPlayerMark("playerTwo", "S");
+
+  controller.makeMove(1, 0);
+  controller.makeMove(0, 0);
+  controller.makeMove(1, 2);
+  controller.makeMove(0, 2);
+  controller.makeMove(2, 0);
+  controller.makeMove(2, 1);
+
+  const scriptedRandomMove = [
+    { row: 0, col: 1 },
+    { row: 1, col: 1 },
+  ];
+
+  (controller as any).game.computerMovePicker = () =>
+    scriptedRandomMove.shift() ?? null;
+
+  const moved = controller.makeComputerMove();
+  const state = controller.getState();
+
+  expect(moved).toBe(true);
+  expect(state).toMatchObject({ currentPlayer: "playerTwo" });
+});
+
+test("8.3", () => {
+  const controller = new GameController(3);
+  controller.setPlayerComputer("playerOne", true);
+
+  controller.makeMove(0, 0);
+  controller.makeMove(0, 1);
+
+  controller.makeComputerMove();
+  const state = controller.getState();
+
+  expect(state.board[0][0]).toBe("S");
+  expect(state.board[0][1]).toBe("O");
+  expect(state.board[0][2]).toBe("S");
+});
+
+test("9.1", () => {
+  const controller = new GameController(3);
+  controller.setPlayerComputer("playerOne", true);
+  controller.setPlayerComputer("playerTwo", true);
+
+  controller.makeComputerMove();
+  const state = controller.getState();
+
+  expect(state.winner).not.toBeNull();
+});
