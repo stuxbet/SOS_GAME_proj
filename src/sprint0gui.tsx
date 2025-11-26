@@ -19,6 +19,7 @@ import { GameController } from "./features/gameController";
 export const Gui: React.FC = () => {
   const controllerRef = useRef(new GameController(3));
   const lastWinnerRef = useRef<WinnerId>(null);
+  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
   const MIN_BOARD_SIZE = 3;
   const MAX_BOARD_SIZE = 10;
   const [gameState, setGameState] = useState(() =>
@@ -71,7 +72,14 @@ export const Gui: React.FC = () => {
 
   const handleDownloadSample = () => {
     const sample = {
-      message: "Sample json",
+      mode: "simple",
+      size: 3,
+      players: {
+        playerOne: { mark: "S", isComputer: false },
+        playerTwo: { mark: "O", isComputer: false },
+      },
+      moves: [],
+      result: { winner: null, scores: { playerOne: 0, playerTwo: 0 } },
     };
     const serialized = JSON.stringify(sample, null, 2);
 
@@ -85,9 +93,30 @@ export const Gui: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = "sample.json";
+    anchor.download = "game.json";
     anchor.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleUpload: React.ChangeEventHandler<HTMLInputElement> = async (
+    event
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      localStorage.setItem("sos-upload-preview", text);
+      setUploadStatus(`Loaded ${file.name}`);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Could not read file.";
+      setUploadStatus(message);
+    } finally {
+      event.target.value = "";
+    }
   };
 
   useEffect(() => {
@@ -260,9 +289,25 @@ export const Gui: React.FC = () => {
       </Box>
 
       <Box mt={4}>
-        <Button variant="outlined" onClick={handleDownloadSample}>
-          Download geam
-        </Button>
+        <Box display="flex" gap={2} alignItems="center">
+          <Button variant="outlined" onClick={handleDownloadSample}>
+            Download sample JSON
+          </Button>
+          <Button variant="outlined" component="label">
+            Upload JSON
+            <input
+              hidden
+              type="file"
+              accept=".json,.txt"
+              onChange={handleUpload}
+            />
+          </Button>
+          {uploadStatus ? (
+            <Typography variant="body2" color="text.secondary">
+              {uploadStatus}
+            </Typography>
+          ) : null}
+        </Box>
       </Box>
     </Box>
   );
