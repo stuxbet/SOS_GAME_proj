@@ -8,7 +8,12 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import type { PlayerId, SosMark, SosGameMode, WinnerId } from "./features/models";
+import type {
+  PlayerId,
+  SosMark,
+  SosGameMode,
+  WinnerId,
+} from "./features/models";
 import { GameController } from "./features/gameController";
 
 export const Gui: React.FC = () => {
@@ -20,8 +25,7 @@ export const Gui: React.FC = () => {
     controllerRef.current.getState()
   );
   const syncState = () => setGameState(controllerRef.current.getState());
-  const isComputerTurn =
-    gameState.players[gameState.currentPlayer].isComputer;
+  const isComputerTurn = gameState.players[gameState.currentPlayer].isComputer;
   const playerConfigLocked = gameState.hasStarted;
 
   const handleSizeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -42,7 +46,10 @@ export const Gui: React.FC = () => {
     syncState();
   };
 
-  const handlePlayerComputerChange = (player: PlayerId, isComputer: boolean) => {
+  const handlePlayerComputerChange = (
+    player: PlayerId,
+    isComputer: boolean
+  ) => {
     controllerRef.current.setPlayerComputer(player, isComputer);
     syncState();
   };
@@ -60,6 +67,27 @@ export const Gui: React.FC = () => {
     } catch (error) {
       console.warn(error);
     }
+  };
+
+  const handleDownloadSample = () => {
+    const sample = {
+      message: "Sample json",
+    };
+    const serialized = JSON.stringify(sample, null, 2);
+
+    try {
+      localStorage.setItem("sample-json", serialized);
+    } catch (error) {
+      console.warn("Could not write sample to localStorage", error);
+    }
+
+    const blob = new Blob([serialized], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "sample.json";
+    anchor.click();
+    URL.revokeObjectURL(url);
   };
 
   useEffect(() => {
@@ -229,6 +257,12 @@ export const Gui: React.FC = () => {
             </Button>
           ))
         )}
+      </Box>
+
+      <Box mt={4}>
+        <Button variant="outlined" onClick={handleDownloadSample}>
+          Download geam
+        </Button>
       </Box>
     </Box>
   );
