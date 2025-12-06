@@ -150,7 +150,9 @@ export class GameController {
   }
 
   private cloneBoard(): SosCell[][] {
-    return this.game.board.map((row) => [...row]);
+    return this.game.board.map((row) =>
+      row.map((cell) => (cell ? { ...cell } : null))
+    );
   }
 
   private snapshotPlayers(): Record<PlayerId, PlayerSnapshot> {

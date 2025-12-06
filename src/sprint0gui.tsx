@@ -71,17 +71,12 @@ export const Gui: React.FC = () => {
   };
 
   const handleDownloadSample = () => {
-    const sample = {
-      mode: "simple",
-      size: 3,
-      players: {
-        playerOne: { mark: "S", isComputer: false },
-        playerTwo: { mark: "O", isComputer: false },
-      },
-      moves: [],
-      result: { winner: null, scores: { playerOne: 0, playerTwo: 0 } },
+    const state = controllerRef.current.getState();
+    const payload = {
+      gameClass: state.mode === "general" ? "GeneralSosGame" : "SimpleSosGame",
+      ...state,
     };
-    const serialized = JSON.stringify(sample, null, 2);
+    const serialized = JSON.stringify(payload, null, 2);
 
     try {
       localStorage.setItem("sample-json", serialized);
@@ -282,7 +277,7 @@ export const Gui: React.FC = () => {
               onClick={() => handleMove(r, c)}
               sx={{ minWidth: 0, width: "100%", height: "100%" }}
             >
-              {cell ?? ""}
+              {cell?.mark ?? ""}
             </Button>
           ))
         )}

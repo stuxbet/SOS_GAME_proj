@@ -1,7 +1,7 @@
-export type SosMark = "S" | "O";
-export type SosCell = SosMark | null;
-export type SosGameMode = "simple" | "general";
 export type PlayerId = "playerOne" | "playerTwo";
+export type SosMark = "S" | "O";
+export type SosCell = { mark: SosMark; player: PlayerId; turn: number } | null;
+export type SosGameMode = "simple" | "general";
 export type WinnerId = PlayerId | "draw" | null;
 export type Scores = Record<PlayerId, number>;
 export type SosMove = { row: number; col: number };
@@ -16,17 +16,20 @@ export type MoveOutcome = {
 abstract class BaseSosGame {
   board: SosCell[][];
   size: number;
+  protected turn: number;
   protected computerMovePicker: () => SosMove | null;
 
   constructor(size = 3) {
     this.size = size;
     this.board = this.makeBoard(size);
+    this.turn = 1;
     this.computerMovePicker = () => this.findFirstOpenCell();
   }
 
   reset(size = this.size) {
     this.size = size;
     this.board = this.makeBoard(size);
+    this.turn = 1;
   }
 
   playMove(
@@ -43,9 +46,11 @@ abstract class BaseSosGame {
     ) {
       throw new Error("Invalid move");
     }
-    this.board[row][col] = mark;
+    this.board[row][col] = { mark, player, turn: this.turn };
     const sequences = this.onMarkPlaced(row, col, mark);
-    return this.resolveOutcome(player, sequences);
+    const outcome = this.resolveOutcome(player, sequences);
+    this.turn += 1;
+    return outcome;
   }
 
   protected onMarkPlaced(_row: number, _col: number, _mark: SosMark): number {
@@ -124,7 +129,7 @@ export class SimpleSosGame extends BaseSosGame {
           continue;
         }
         const [first, middle, last] = positions.map(
-          ([r, c]) => this.board[r][c]
+          ([r, c]) => this.board[r][c]?.mark
         );
         if (first === "S" && middle === "O" && last === "S") {
           matches += 1;
@@ -187,7 +192,7 @@ export class GeneralSosGame extends BaseSosGame {
           continue;
         }
         const [first, middle, last] = positions.map(
-          ([r, c]) => this.board[r][c]
+          ([r, c]) => this.board[r][c]?.mark
         );
         if (first === "S" && middle === "O" && last === "S") {
           matches += 1;

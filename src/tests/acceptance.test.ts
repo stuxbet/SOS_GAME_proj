@@ -64,7 +64,11 @@ test("4.1", () => {
   controller.makeMove(1, 1);
   const state = controller.getState();
 
-  expect(state.board[1][1]).toBe("S");
+  expect(state.board[1][1]).toMatchObject({
+    mark: "S",
+    player: "playerOne",
+    turn: 1,
+  });
 });
 
 test("4.2", () => {
@@ -230,9 +234,21 @@ test("8.3", () => {
   controller.makeComputerMove();
   const state = controller.getState();
 
-  expect(state.board[0][0]).toBe("S");
-  expect(state.board[0][1]).toBe("O");
-  expect(state.board[0][2]).toBe("S");
+  expect(state.board[0][0]).toMatchObject({
+    mark: "S",
+    player: "playerOne",
+    turn: 1,
+  });
+  expect(state.board[0][1]).toMatchObject({
+    mark: "O",
+    player: "playerTwo",
+    turn: 2,
+  });
+  expect(state.board[0][2]).toMatchObject({
+    mark: "S",
+    player: "playerOne",
+    turn: 3,
+  });
 });
 
 test("9.1", () => {
