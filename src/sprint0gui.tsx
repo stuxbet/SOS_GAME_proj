@@ -15,29 +15,40 @@ import type {
   WinnerId,
 } from "./features/models";
 import { GameController } from "./features/gameController";
+import { serializeForDownload } from "./features/replay";
+import { useReplay } from "./features/useReplay";
 
 export const Gui: React.FC = () => {
   const controllerRef = useRef(new GameController(3));
   const lastWinnerRef = useRef<WinnerId>(null);
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
-  const MIN_BOARD_SIZE = 3;
-  const MAX_BOARD_SIZE = 10;
   const [gameState, setGameState] = useState(() =>
     controllerRef.current.getState()
   );
   const syncState = () => setGameState(controllerRef.current.getState());
+  const {
+    isReplaying,
+    status: replayStatus,
+    stopReplay,
+    handleUploadedFile,
+  } = useReplay({
+    controllerRef,
+    syncState,
+  });
   const isComputerTurn = gameState.players[gameState.currentPlayer].isComputer;
-  const playerConfigLocked = gameState.hasStarted;
+  const playerConfigLocked = gameState.hasStarted || isReplaying;
+  useEffect(() => {
+    if (replayStatus) {
+      setUploadStatus(replayStatus);
+    }
+  }, [replayStatus]);
 
   const handleSizeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = Number(event.target.value);
     if (!Number.isFinite(value)) {
       return;
     }
-    const clamped = Math.min(
-      MAX_BOARD_SIZE,
-      Math.max(MIN_BOARD_SIZE, Math.round(value))
-    );
+    const clamped = GameController.clampSize(value);
     controllerRef.current.reset(clamped);
     syncState();
   };
@@ -71,12 +82,7 @@ export const Gui: React.FC = () => {
   };
 
   const handleDownloadSample = () => {
-    const state = controllerRef.current.getState();
-    const payload = {
-      gameClass: state.mode === "general" ? "GeneralSosGame" : "SimpleSosGame",
-      ...state,
-    };
-    const serialized = JSON.stringify(payload, null, 2);
+    const serialized = serializeForDownload(controllerRef.current.getState());
 
     try {
       localStorage.setItem("sample-json", serialized);
@@ -100,22 +106,19 @@ export const Gui: React.FC = () => {
     if (!file) {
       return;
     }
-    try {
-      const text = await file.text();
-      const parsed = JSON.parse(text);
-      localStorage.setItem("sos-upload-preview", text);
-      setUploadStatus(`Loaded ${file.name}`);
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Could not read file.";
-      setUploadStatus(message);
-    } finally {
-      event.target.value = "";
-    }
+    await handleUploadedFile(file);
+    event.target.value = "";
   };
 
   useEffect(() => {
-    if (gameState.winner && lastWinnerRef.current !== gameState.winner) {
+    if (
+      isReplaying ||
+      (gameState.winner && lastWinnerRef.current !== gameState.winner)
+    ) {
+      if (isReplaying) {
+        lastWinnerRef.current = gameState.winner ?? null;
+        return;
+      }
       let message: string;
       if (gameState.winner === "draw") {
         message = "Game ends in a draw.";
@@ -127,10 +130,10 @@ export const Gui: React.FC = () => {
       window.alert(message);
     }
     lastWinnerRef.current = gameState.winner ?? null;
-  }, [gameState.winner]);
+  }, [gameState.winner, isReplaying]);
 
   useEffect(() => {
-    if (!isComputerTurn || gameState.winner) {
+    if (isReplaying || !isComputerTurn || gameState.winner) {
       return;
     }
     try {
@@ -139,7 +142,14 @@ export const Gui: React.FC = () => {
     } catch (error) {
       console.warn(error);
     }
-  }, [isComputerTurn, gameState.winner]);
+  }, [isComputerTurn, gameState.winner, isReplaying]);
+
+  useEffect(
+    () => () => {
+      stopReplay();
+    },
+    [stopReplay]
+  );
 
   return (
     <Box sx={{ p: 4, maxWidth: 720, width: "100%", mx: "auto" }}>
@@ -245,7 +255,10 @@ export const Gui: React.FC = () => {
           type="number"
           value={gameState.size}
           onChange={handleSizeChange}
-          inputProps={{ min: MIN_BOARD_SIZE, max: MAX_BOARD_SIZE }}
+          inputProps={{
+            min: GameController.MIN_SIZE,
+            max: GameController.MAX_SIZE,
+          }}
         />
       </Box>
 
@@ -272,7 +285,10 @@ export const Gui: React.FC = () => {
               key={`${r}-${c}`}
               variant="outlined"
               disabled={
-                Boolean(cell) || Boolean(gameState.winner) || isComputerTurn
+                Boolean(cell) ||
+                Boolean(gameState.winner) ||
+                isComputerTurn ||
+                isReplaying
               }
               onClick={() => handleMove(r, c)}
               sx={{ minWidth: 0, width: "100%", height: "100%" }}

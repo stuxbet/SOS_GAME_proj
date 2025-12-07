@@ -17,8 +17,8 @@ import {
 } from "./player";
 
 export class GameController {
-  private static readonly MIN_SIZE = 3;
-  private static readonly MAX_SIZE = 10;
+  public static readonly MIN_SIZE = 3;
+  public static readonly MAX_SIZE = 10;
   private game: SosGame;
   private players: Record<PlayerId, BasePlayer>;
   private currentPlayer: PlayerId;
@@ -29,7 +29,7 @@ export class GameController {
 
   constructor(size = 3, mode: SosGameMode = "simple") {
     this.mode = mode;
-    const clampedSize = this.clampSize(size);
+    const clampedSize = GameController.clampSize(size);
     this.game = createSosGame(mode, clampedSize);
     this.players = {
       playerOne: new HumanPlayer("playerOne", "S"),
@@ -93,7 +93,7 @@ export class GameController {
   }
 
   reset(size = this.game.size) {
-    const clampedSize = this.clampSize(size);
+    const clampedSize = GameController.clampSize(size);
     this.game = createSosGame(this.mode, clampedSize);
     this.currentPlayer = "playerOne";
     this.scores = { playerOne: 0, playerTwo: 0 };
@@ -111,7 +111,7 @@ export class GameController {
       if (!this.players[this.currentPlayer].isComputer()) {
         break;
       }
-      const move = this.game.getComputerMove();
+      const move = this.players[this.currentPlayer].takeTurn(this.game);
       if (!move) {
         break;
       }
@@ -129,7 +129,7 @@ export class GameController {
       return;
     }
     const activePlayer = this.currentPlayer;
-    const mark = this.players[this.currentPlayer].getMark();
+    const mark = this.players[activePlayer].getMark();
     const outcome: MoveOutcome = this.game.playMove(
       row,
       col,
@@ -137,16 +137,16 @@ export class GameController {
       activePlayer
     );
 
-    this.hasStarted = true;
-    this.scores = { ...outcome.scores };
+    this.applyOutcome(outcome, activePlayer);
+  }
 
-    if (outcome.winner !== null) {
-      this.winner = outcome.winner;
+  applyRecordedMove(row: number, col: number, player: PlayerId, mark: SosMark) {
+    if (this.winner) return;
+    if (this.players[player].getMark() !== mark) {
+      this.players[player].setMark(mark);
     }
-
-    if (!outcome.extraTurn && this.winner === null) {
-      this.currentPlayer = this.togglePlayer(activePlayer);
-    }
+    const outcome: MoveOutcome = this.game.playMove(row, col, mark, player);
+    this.applyOutcome(outcome, player);
   }
 
   private cloneBoard(): SosCell[][] {
@@ -176,7 +176,7 @@ export class GameController {
     return player === "playerOne" ? "playerTwo" : "playerOne";
   }
 
-  private clampSize(value: number): number {
+  public static clampSize(value: number): number {
     const { MIN_SIZE, MAX_SIZE } = GameController;
     if (!Number.isFinite(value)) {
       return MIN_SIZE;
@@ -189,5 +189,20 @@ export class GameController {
       return MAX_SIZE;
     }
     return rounded;
+  }
+
+  private applyOutcome(outcome: MoveOutcome, player: PlayerId) {
+    this.hasStarted = true;
+    this.scores = { ...outcome.scores };
+
+    if (outcome.winner !== null) {
+      this.winner = outcome.winner;
+    }
+
+    if (!outcome.extraTurn && this.winner === null) {
+      this.currentPlayer = this.togglePlayer(player);
+    } else {
+      this.currentPlayer = player;
+    }
   }
 }
